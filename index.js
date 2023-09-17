@@ -2,7 +2,7 @@ const express = require('express')
 const cors = require('cors')
 const app = express()
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
 // middleware
@@ -26,11 +26,82 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
-    
+    // await client.connect();
 
-    const contactCollection= client.db('contactManagementDb').collection('contacts')
 
+    const contactCollection= client.db('contactManagementDb').collection('contacts');
+
+
+    // ------get api-----------
+    app.get('/contacts',async(req,res)=>{
+        const result= await contactCollection.find().toArray()
+        res.send(result)
+    })
+
+    app.get('/contacts/:id',async(req,res)=>{
+        const id =req.params.id
+        const query={
+            _id: new ObjectId(id)
+        }
+        if (!query) {
+            res.send({error:true,  message:"data not found"})
+        }
+        const result= await contactCollection.findOne(query)
+        res.send(result)
+    })
+
+ // ------post api-----------
+    app.post('/contacts',async(req,res)=>{
+        const newContact= req.body;
+        if (!newContact) {
+            res.send({error:true,message:"data not found"})
+        }
+        const result= await contactCollection.insertOne(newContact)
+        res.send(result)
+    })
+
+
+ // ------put api-----------
+
+    app.put('/contacts/:id',async(req,res)=>{
+        const id= req.params.id;
+        if (!id) {
+            res.send({error:true, message:"data not found"})
+        }
+
+        const updateContact=req.body;
+        // console.log(updateContact);
+
+        const filter={
+            _id:new ObjectId(id)
+        }
+
+        const updateDoc={
+            $set:{
+                name:updateContact?.name,
+                email:updateContact?.email,
+                date:updateContact?.date,
+                number:updateContact?.number,
+            }
+        }
+        
+        const result= await contactCollection.updateOne(filter,updateDoc)
+        res.send(result)
+    })
+
+
+ // ------delete api-----------
+ app.delete('/contacts/:id',async(req,res)=>{
+    const id= req.params.id;
+    if (!id) {
+        res.send({error:true, message:"data not found"})
+    }
+    const query={
+        _id:new ObjectId(id)
+    }
+    const result= await contactCollection.deleteOne(query)
+    res.send(result)
+})
 
 
     // Send a ping to confirm a successful connection
