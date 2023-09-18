@@ -36,8 +36,10 @@ async function run() {
     app.get('/contacts',async(req,res)=>{
         const sortOrder = req.query.sort === 'desc' ? -1 : 1;
         const search=req.query.search;
+        console.log(search);
+        const query={ name:{$regex:search, $options:'i'}}
         
-        const result= await contactCollection.find().sort({ name: sortOrder }).toArray()
+        const result= await contactCollection.find(query).sort({ name: sortOrder }).toArray()
         res.send(result)
     })
 
